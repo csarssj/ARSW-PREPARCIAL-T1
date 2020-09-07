@@ -14,10 +14,11 @@ import java.util.stream.Stream;
 
 public class MoneyLaundering
 {
-    private TransactionAnalyzer transactionAnalyzer;
+    public static TransactionAnalyzer transactionAnalyzer;
     private TransactionReader transactionReader;
     private int amountOfFilesTotal;
-    private AtomicInteger amountOfFilesProcessed;
+    public static AtomicInteger amountOfFilesProcessed;
+    private int hilos = 5;
 
     public MoneyLaundering()
     {
@@ -31,14 +32,33 @@ public class MoneyLaundering
         amountOfFilesProcessed.set(0);
         List<File> transactionFiles = getTransactionFileList();
         amountOfFilesTotal = transactionFiles.size();
-        for(File transactionFile : transactionFiles)
-        {            
-            List<Transaction> transactions = transactionReader.readTransactionsFromFile(transactionFile);
-            for(Transaction transaction : transactions)
-            {
-                transactionAnalyzer.addTransaction(transaction);
-            }
-            amountOfFilesProcessed.incrementAndGet();
+        int count = amountOfFilesTotal/hilos;
+        int mod = amountOfFilesTotal%hilos;
+        int inicio = 0;
+        int fin = count;
+        List<MoneyLaunderingThread> threads = new ArrayList<>();
+        for (int i = 0; i < hilos; i++) {
+        	if(i == hilos -1) {
+        		fin = mod;
+        	}
+            List<File> aux = new ArrayList<>();
+        	for(int j=inicio; j<fin;j++) {
+        		aux.add(transactionFiles.get(j));
+        	}
+        	
+        	MoneyLaunderingThread hilo = new MoneyLaunderingThread(aux);
+        	hilo.start();
+        	threads.add(hilo);
+        	inicio = fin;
+        	fin +=count;
+        }
+        for(MoneyLaunderingThread t:threads) {
+        	try {
+				t.join();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
         }
     }
 
