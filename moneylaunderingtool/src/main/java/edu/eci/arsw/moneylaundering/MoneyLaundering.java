@@ -18,13 +18,17 @@ public class MoneyLaundering
     private TransactionReader transactionReader;
     private int amountOfFilesTotal;
     public static AtomicInteger amountOfFilesProcessed;
-    private int hilos = 5;
+    private int hilos = 10;
+    public static boolean pause;
+
+    public static List<MoneyLaunderingThread> threads;
 
     public MoneyLaundering()
     {
         transactionAnalyzer = new TransactionAnalyzer();
         transactionReader = new TransactionReader();
         amountOfFilesProcessed = new AtomicInteger();
+        pause = false;
     }
 
     public void processTransactionData()
@@ -35,11 +39,10 @@ public class MoneyLaundering
         int count = amountOfFilesTotal/hilos;
         int mod = amountOfFilesTotal%hilos;
         int inicio = 0;
-        int fin = count;
-        List<MoneyLaunderingThread> threads = new ArrayList<>();
+        int fin = count;threads = new ArrayList<>();
         for (int i = 0; i < hilos; i++) {
         	if(i == hilos -1) {
-        		fin = mod;
+        		fin += mod;
         	}
             List<File> aux = new ArrayList<>();
         	for(int j=inicio; j<fin;j++) {
@@ -89,11 +92,25 @@ public class MoneyLaundering
             String line = scanner.nextLine();
             if(line.contains("exit"))
                 break;
-            String message = "Processed %d out of %d files.\nFound %d suspect accounts:\n%s";
-            List<String> offendingAccounts = moneyLaundering.getOffendingAccounts();
-            String suspectAccounts = offendingAccounts.stream().reduce("", (s1, s2)-> s1 + "\n"+s2);
-            message = String.format(message, moneyLaundering.amountOfFilesProcessed.get(), moneyLaundering.amountOfFilesTotal, offendingAccounts.size(), suspectAccounts);
-            System.out.println(message);
+            if(line.isEmpty()) {
+            	if(!pause) {
+            		System.out.println("Pausa");
+		            String message = "Processed %d out of %d files.\nFound %d suspect accounts:\n%s";
+		            List<String> offendingAccounts = moneyLaundering.getOffendingAccounts();
+		            String suspectAccounts = offendingAccounts.stream().reduce("", (s1, s2)-> s1 + "\n"+s2);
+		            message = String.format(message, moneyLaundering.amountOfFilesProcessed.get(), moneyLaundering.amountOfFilesTotal, offendingAccounts.size(), suspectAccounts);
+		            System.out.println(message);
+		            pause = true;
+            	}else{
+            		System.out.println("Continuar");
+            		pause = false;
+            		for (MoneyLaunderingThread t: threads) {
+            			t.resumen();
+            		}
+            	}
+            	
+            	
+            }
         }
 
     }
