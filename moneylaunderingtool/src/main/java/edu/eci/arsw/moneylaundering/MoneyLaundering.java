@@ -18,7 +18,7 @@ public class MoneyLaundering
     private TransactionReader transactionReader;
     private int amountOfFilesTotal;
     public static AtomicInteger amountOfFilesProcessed;
-    private int hilos = 10;
+    private int hilos = 5;
     public static boolean pause;
 
     public static List<MoneyLaunderingThread> threads;
